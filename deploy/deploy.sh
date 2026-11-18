@@ -18,7 +18,7 @@ main() {
   bind=$(grep -E '^WEB_BIND=' .env | cut -d= -f2 || true)
   bind=${bind:-127.0.0.1}
   for _ in $(seq 1 40); do
-    code=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: usterka.axword.pl' "http://$bind:8081/api/billing/plans" || true)
+    code=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: usterka.axword.pl' -H 'X-Forwarded-Proto: https' "http://$bind:8081/api/billing/plans" || true)
     if [ "$code" = "200" ]; then echo "OK ($code)"; sudo docker image prune -f >/dev/null; return 0; fi
     sleep 3
   done
