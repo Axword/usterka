@@ -1,15 +1,15 @@
-# Caddy: automatyczny HTTPS (Let's Encrypt), frontend + proxy do API. {$DOMAIN} z pliku .env
-{$DOMAIN} {
+# Wewnętrzny Caddy usterki: słucha tylko na 127.0.0.1:8081 (patrz compose), HTTPS robi Twój istniejący Caddy.
+{
+	auto_https off
+	servers {
+		# Zachowaj X-Forwarded-Proto/For z zewnętrznego Caddy (inaczej Django widzi http i zapętla przekierowanie HTTPS)
+		trusted_proxies static private_ranges
+	}
+}
+
+:80 {
 	encode gzip zstd
 
-	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains"
-		X-Content-Type-Options nosniff
-		X-Frame-Options DENY
-		Referrer-Policy same-origin
-	}
-
-	# Pliki wysyłane przez użytkowników mogą mieć do 40 MB (plany)
 	request_body {
 		max_size 60MB
 	}

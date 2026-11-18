@@ -41,18 +41,14 @@ services:
       context: ..
       dockerfile: deploy/Dockerfile.web
     restart: unless-stopped
-    environment:
-      DOMAIN: ${DOMAIN}
-    ports: ["80:80", "443:443", "443:443/udp"]
+    # Tylko lokalnie: publiczny HTTPS robi istniejący Caddy serwera (reverse_proxy do 127.0.0.1:8081)
+    ports: ["127.0.0.1:8081:80"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
     volumes:
       - static:/srv/static:ro
-      - caddy_data:/data
-      - caddy_config:/config
     depends_on: [backend]
 
 volumes:
   pgdata:
   media:
   static:
-  caddy_data:
-  caddy_config:
