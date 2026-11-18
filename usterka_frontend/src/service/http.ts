@@ -7,7 +7,7 @@ export default class Http {
   http: AxiosInstance;
 
   constructor() {
-    this.http = axios.create({ baseURL: apiBaseUrl(), headers: { 'Content-Type': 'application/json' } });
+    this.http = axios.create({ baseURL: apiBaseUrl(), headers: { 'Content-Type': 'application/json' }, timeout: 60_000 });
   }
 }
 
@@ -16,6 +16,7 @@ export function errorMessage(e: unknown, fallback = 'Wystąpił błąd.'): strin
     const d = e.response?.data as { detail?: unknown } | undefined;
     if (typeof d?.detail === 'string') return d.detail;
     if (Array.isArray(d?.detail)) return 'Niepoprawne dane formularza.';
+    if (e.code === 'ECONNABORTED' || e.code === 'ETIMEDOUT') return 'Serwer nie odpowiedział w czasie. Sprawdź połączenie i spróbuj ponownie.';
     if (!e.response) return 'Brak połączenia z serwerem.';
   }
   return e instanceof Error ? e.message : fallback;

@@ -31,6 +31,7 @@ class Rest extends AuthHttp {
     return (
       await this.http.post<T>(url, form, {
         headers: { 'Content-Type': undefined },
+        timeout: 180_000, // wysyłka plików (plany, zdjęcia) na wolnym LTE bywa długa, ale nie może trwać w nieskończoność
         onUploadProgress: (e) => onProgress && e.total && onProgress(e.loaded / e.total),
       })
     ).data;

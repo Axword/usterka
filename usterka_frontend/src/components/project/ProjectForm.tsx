@@ -63,18 +63,24 @@ export default function ProjectForm({ project, onClose, onSaved, onDeleted }: Pr
     setBad(missing);
     if (missing.size) return;
     try {
+      let logoError: string | null = null;
       const saved = await withBusy('Zapisywanie…', async () => {
         let p = isNew ? await ProjectService.create(v) : await ProjectService.update(project.id, v);
-        if (logo) {
-          p = await ProjectService.uploadLogo(p.id, logo);
-          forgetFile(ProjectService.logoUrl(p.id));
-        } else if (removeLogo && p.has_logo) {
-          p = await ProjectService.removeLogo(p.id);
-          forgetFile(ProjectService.logoUrl(p.id));
+        try {
+          if (logo) {
+            p = await ProjectService.uploadLogo(p.id, logo);
+            forgetFile(ProjectService.logoUrl(p.id));
+          } else if (removeLogo && p.has_logo) {
+            p = await ProjectService.removeLogo(p.id);
+            forgetFile(ProjectService.logoUrl(p.id));
+          }
+        } catch (e) {
+          logoError = errorMessage(e); // dane inwestycji są już zapisane - nie tracimy ich przez logo
         }
         return p;
       });
       onSaved(saved);
+      if (logoError) toast(`Dane zapisane, ale logo się nie wysłało: ${logoError}`, 6000);
     } catch (e) {
       toast(errorMessage(e));
     }
