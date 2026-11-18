@@ -1,0 +1,7 @@
+a.back, a.btn { text-decoration: none; }
+.ritem { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 12px 16px; flex-wrap: wrap; }
+.ritem .txt { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.ritem .ty { font-weight: 600; font-size: 14px; }
+.filebtn[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+fieldset[disabled] .inp { opacity: .8; }
+.toast { transition: transform .2s; }

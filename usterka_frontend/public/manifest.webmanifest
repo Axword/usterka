@@ -1,0 +1,9 @@
+{
+  "name": "Usterki na planie",
+  "short_name": "Usterki",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EDEFEA",
+  "theme_color": "#1F4E8C",
+  "lang": "pl"
+}

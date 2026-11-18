@@ -1,0 +1,18 @@
+[project]
+name = "usterka"
+version = "0.1.0"
+description = "Usterki na planie - API"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["tests.py", "test_*.py"]
+
+[tool.ruff]
+line-length = 130
+target-version = "py310"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "DJ", "S"]
+ignore = ["S101", "B008"]  # B008: Form()/File() w sygnaturach to idiom django-ninja

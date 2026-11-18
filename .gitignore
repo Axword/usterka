@@ -1,0 +1,14 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.cache/
+application/sqlite3.db
+application/media/
+application/staticfiles/
+application/.test-media/
+.pytest_cache/
+.ruff_cache/
+usterka_frontend/node_modules/
+usterka_frontend/dist/
+usterka_frontend/.env.local
