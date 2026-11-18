@@ -1,5 +1,5 @@
 from django.conf import settings
-from ninja import Router, Schema
+from ninja import Router, Schema, Status
 from ninja.errors import HttpError
 from pydantic import EmailStr
 
@@ -77,7 +77,7 @@ def register_view(request, data: RegisterIn):
     if not settings.AUTH_PASSWORD_LOGIN:
         raise HttpError(404, 'Niedostępne.')
     user = register_with_password(request, data.email, data.password, data.name, data.company)
-    return 201, {'token': make_password_token(user.pk)}
+    return Status(201, {'token': make_password_token(user.pk)})
 
 
 @router.post('/login', auth=None, response=TokenOut)

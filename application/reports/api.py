@@ -1,7 +1,7 @@
 import datetime as dt
 import logging
 
-from ninja import File, Form, Router, Schema
+from ninja import File, Form, Router, Schema, Status
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
 
@@ -101,7 +101,7 @@ def create_report(
     r.save()
     if send_to_sharepoint:
         _send_to_sharepoint(request, r)
-    return 201, _out(r)
+    return Status(201, _out(r))
 
 
 def _get(request, report_id: str) -> Report:
@@ -130,4 +130,4 @@ def report_file(request, report_id: str):
 def delete_report(request, report_id: str):
     require_write(request)
     _get(request, report_id).delete()
-    return 204, None
+    return Status(204, None)

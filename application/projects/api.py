@@ -1,5 +1,5 @@
 from django.db.models import Count, Q
-from ninja import File, Router
+from ninja import File, Router, Status
 from ninja.files import UploadedFile
 
 from billing.services import check_project_limit
@@ -44,7 +44,7 @@ def create_project(request, data: ProjectIn):
     require_write(request)
     check_project_limit(organization(request))
     p = Project.objects.create(organization=organization(request), created_by=request.auth, **data.dict())
-    return 201, _fresh(p)
+    return Status(201, _fresh(p))
 
 
 @router.get('/{project_id}', response=ProjectOut)
@@ -66,7 +66,7 @@ def update_project(request, project_id: str, data: ProjectPatch):
 def delete_project(request, project_id: str):
     p = get_project(request, project_id, write=True)
     p.delete()  # kaskadowo plany, usterki, zdjęcia, raporty (pliki usuwa core.signals)
-    return 204, None
+    return Status(204, None)
 
 
 @router.put('/{project_id}/report-settings', response=ProjectOut)

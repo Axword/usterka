@@ -1,6 +1,6 @@
 import datetime as dt
 
-from ninja import File, Form, Router, Schema
+from ninja import File, Form, Router, Schema, Status
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
 
@@ -57,7 +57,7 @@ def create_plan(
     plan.image.save(new_name(ext), image, save=False)
     plan.save()
     project.save(update_fields=['updated_at'])
-    return 201, _out(plan)
+    return Status(201, _out(plan))
 
 
 @router.patch('/plans/{plan_id}', response=PlanOut)
@@ -73,7 +73,7 @@ def rename_plan(request, plan_id: str, data: PlanPatch):
 @router.delete('/plans/{plan_id}', response={204: None})
 def delete_plan(request, plan_id: str):
     get_plan(request, plan_id, write=True).delete()
-    return 204, None
+    return Status(204, None)
 
 
 @router.get('/plans/{plan_id}/image')

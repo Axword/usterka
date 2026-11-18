@@ -2,7 +2,7 @@ import datetime as dt
 import uuid
 
 from django.db.models import Max
-from ninja import File, Form, Router, Schema
+from ninja import File, Form, Router, Schema, Status
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
 
@@ -109,7 +109,7 @@ def create_defect(request, project_id: str, data: DefectIn):
     if payload.get('id') is None or Defect.objects.filter(pk=payload['id']).exists():
         payload.pop('id')
     d = services.create_defect(project, request.auth, payload, organization(request).defect_types)
-    return 201, _reload(d)
+    return Status(201, _reload(d))
 
 
 @router.get('/defects/{defect_id}', response=DefectOut)
@@ -135,7 +135,7 @@ def delete_defect(request, defect_id: str):
     for p in d.photos.all():
         p.delete()  # pojedynczo, żeby sygnał usunął pliki
     d.delete()
-    return 204, None
+    return Status(204, None)
 
 
 @router.get('/defects/{defect_id}/events', response=list[EventOut])
@@ -159,7 +159,7 @@ def add_photo(request, defect_id: str, kind: str = Form(...), file: UploadedFile
     photo.save()
     services.log(d, request.auth, 'photo_added', {'kind': kind})
     services.refresh_status(d, request.auth)
-    return 201, _reload(d)
+    return Status(201, _reload(d))
 
 
 def _get_photo(request, photo_id: str) -> Photo:
