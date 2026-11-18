@@ -141,7 +141,9 @@ EMAIL_HOST = os.getenv('EMAIL_HOST', '')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '465'))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', True)
+# Port 465 = SSL od początku połączenia, port 587 = STARTTLS (np. Brevo). Dokładnie jedno z nich może być włączone.
+EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', False)
+EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', not EMAIL_USE_TLS)
 EMAIL_TIMEOUT = 10
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' if EMAIL_HOST else 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL') or 'Usterki na planie <noreply@localhost>'

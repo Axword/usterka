@@ -98,3 +98,5 @@ def test_mail_backend_depends_on_smtp_configuration(load_settings, monkeypatch):
     s = load_settings(EMAIL_HOST='ssl0.ovh.net', EMAIL_PORT='465', DEFAULT_FROM_EMAIL='Usterki <noreply@axword.pl>')
     assert s['EMAIL_BACKEND'].endswith('smtp.EmailBackend') and s['EMAIL_PORT'] == 465 and s['EMAIL_USE_SSL'] is True
     assert s['DEFAULT_FROM_EMAIL'] == 'Usterki <noreply@axword.pl>' and s['PASSWORD_RESET_TIMEOUT'] == 7200
+    brevo = load_settings(EMAIL_HOST='smtp-relay.brevo.com', EMAIL_PORT='587', EMAIL_USE_TLS='1')
+    assert brevo['EMAIL_USE_TLS'] is True and brevo['EMAIL_USE_SSL'] is False  # STARTTLS wyłącza SSL
