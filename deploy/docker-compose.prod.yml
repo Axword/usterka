@@ -30,7 +30,7 @@ services:
     command: >
       sh -c "python manage.py migrate --noinput &&
              python manage.py collectstatic --noinput &&
-             gunicorn config.wsgi --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile -"
+             gunicorn config.wsgi --bind 0.0.0.0:8000 --workers 2 --timeout 120 --access-logfile -"
     volumes:
       - media:/data/media
       - static:/app/staticfiles
@@ -43,7 +43,7 @@ services:
       dockerfile: deploy/Dockerfile.web
     restart: unless-stopped
     # Tylko lokalnie: publiczny HTTPS robi istniejący Caddy serwera (reverse_proxy do 127.0.0.1:8081)
-    ports: ["127.0.0.1:8081:80"]
+    ports: ["${WEB_BIND:-127.0.0.1}:8081:80"]
     extra_hosts: ["host.docker.internal:host-gateway"]
     volumes:
       - static:/srv/static:ro
