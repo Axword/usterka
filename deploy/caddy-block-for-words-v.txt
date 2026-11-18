@@ -1,0 +1,10 @@
+# Dopisz na końcu pliku infra/vps/Caddyfile w repozytorium aplikacji words-v (lol-kontra),
+# żeby blok przetrwał każde nowe wydanie. Ten sam blok jest już ręcznie dopisany na serwerze
+# w bieżącym wydaniu - po wdrożeniu repo będzie zgodne z serwerem.
+#
+# Wymaga, żeby stos usterki działał na VPS (~/usterka) i nasłuchiwał na 172.17.0.1:8081 (WEB_BIND w .env).
+
+usterka.axword.pl {
+	encode zstd gzip
+	reverse_proxy 172.17.0.1:8081
+}

@@ -124,3 +124,9 @@ W panelu OVH masz „Automated backup: Standard” dla całego VPS, ale pg_dump 
 * Produkcja ma wyłączone logowanie „dev” (sam e-mail) i wymaga `DJANGO_SECRET_KEY`. Logowanie hasłem działa.
 * Adres IP klienta (limit prób logowania) pochodzi z `X-Forwarded-For` ustawianego przez zewnętrzny Caddy. Wewnętrzny Caddy ufa mu tylko z sieci prywatnych (`trusted_proxies`).
 * Te pliki nie były jeszcze uruchomione na prawdziwym serwerze. Konfigurację Compose sprawdziłem, ale pełny start wychodzi dopiero na VPS.
+
+## Stan wdrożenia i trwałość konfiguracji Caddy
+
+Usterka działa na VPS w `~/usterka` (kontenery `usterka-db-1`, `usterka-backend-1`, `usterka-web-1`), a `WEB_BIND=172.17.0.1` w `.env` wystawia ją na moście docker0 dla Caddy aplikacji `words-v`.
+
+Blok z `deploy/caddy-block-for-words-v.txt` został dopisany ręcznie do Caddyfile **bieżącego wydania** `words-v`. Kolejne wydanie tej aplikacji nadpisze ten plik, więc dopisz ten sam blok w jej repozytorium (`infra/vps/Caddyfile`). Do tego czasu po każdym jej wdrożeniu usterka znika z internetu (kontenery działają dalej) i trzeba blok dopisać ponownie.
