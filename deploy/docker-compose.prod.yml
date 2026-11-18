@@ -1,0 +1,58 @@
+# Produkcja na VPS:  docker compose -f deploy/docker-compose.prod.yml --env-file .env up -d --build
+# Z katalogu głównego repozytorium. Zmienne w .env (wzór: deploy/.env.production.example).
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: usterka
+      POSTGRES_USER: usterka
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?ustaw POSTGRES_PASSWORD}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U usterka"]
+      interval: 5s
+      retries: 20
+
+  backend:
+    build: ../application
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      DJANGO_DEBUG: "false"
+      AUTH_DEV_LOGIN: "0"
+      DATABASE_URL: postgres://usterka:${POSTGRES_PASSWORD}@db:5432/usterka
+      MEDIA_ROOT: /data/media
+      DJANGO_ALLOWED_HOSTS: ${DOMAIN},backend
+      FRONTEND_ORIGINS: https://${DOMAIN}
+      FRONTEND_URL: https://${DOMAIN}
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn config.wsgi --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile -"
+    volumes:
+      - media:/data/media
+      - static:/app/staticfiles
+    depends_on:
+      db: { condition: service_healthy }
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes:
+      - static:/srv/static:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [backend]
+
+volumes:
+  pgdata:
+  media:
+  static:
+  caddy_data:
+  caddy_config:

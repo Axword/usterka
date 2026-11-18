@@ -1,0 +1,12 @@
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY usterka_frontend/package.json usterka_frontend/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY usterka_frontend/ .
+# Ten sam adres co strona: /api/ (Caddy kieruje do backendu)
+ENV VITE_API_BASE_URL=/api/
+RUN npm run build
+
+FROM caddy:2-alpine
+COPY deploy/Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /app/dist /srv/app

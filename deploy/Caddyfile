@@ -1,0 +1,32 @@
+# Caddy: automatyczny HTTPS (Let's Encrypt), frontend + proxy do API. {$DOMAIN} z pliku .env
+{$DOMAIN} {
+	encode gzip zstd
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy same-origin
+	}
+
+	# Pliki wysyłane przez użytkowników mogą mieć do 40 MB (plany)
+	request_body {
+		max_size 60MB
+	}
+
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+	handle /admin/* {
+		reverse_proxy backend:8000
+	}
+	handle /static/* {
+		root * /srv
+		file_server
+	}
+	handle {
+		root * /srv/app
+		try_files {path} /index.html
+		file_server
+	}
+}
