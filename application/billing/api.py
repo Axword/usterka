@@ -61,6 +61,8 @@ def subscription(request):
 @router.post('/checkout', response=UrlOut)
 def checkout(request, data: CheckoutIn):
     require_admin(request)
+    if not request.auth.email_verified:
+        raise HttpError(403, 'Potwierdź adres e-mail, zanim kupisz plan. Link wysłaliśmy po rejestracji.')
     if data.plan not in ('pro', 'business'):
         raise HttpError(400, 'Nieznany plan.')
     org = organization(request)

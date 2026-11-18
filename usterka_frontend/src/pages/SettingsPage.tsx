@@ -5,8 +5,8 @@ import { errorMessage } from 'src/service/http';
 import { OrganizationService } from 'src/service/organization';
 import { useAuth } from 'src/stores/authStore';
 import { useProjectStore } from 'src/stores/projectStore';
-import { toast, withBusy } from 'src/stores/uiStore';
-import type { Member, Organization, Role } from 'src/types/api';
+import { dialog, toast, withBusy } from 'src/stores/uiStore';
+import type { Invitation, Member, Organization, Role } from 'src/types/api';
 
 const ROLES: [Role, string][] = [['admin', 'Administrator'], ['inspector', 'Inspektor'], ['viewer', 'Podgląd']];
 
@@ -16,6 +16,8 @@ export default function SettingsPage() {
   const [org, setOrg] = useState<Organization | null>(null);
   const [form, setForm] = useState({ name: '', sp_site_url: '', sp_library: '', sp_folder: '', types: '' });
   const [members, setMembers] = useState<Member[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [invite, setInvite] = useState({ email: '', role: 'inspector' as Role });
 
   useEffect(() => {
     OrganizationService.get().then((o) => {
@@ -23,6 +25,7 @@ export default function SettingsPage() {
       setForm({ name: o.name, sp_site_url: o.sp_site_url, sp_library: o.sp_library, sp_folder: o.sp_folder, types: o.defect_types.join('\n') });
     }).catch((e) => toast(errorMessage(e)));
     OrganizationService.members().then(setMembers).catch(() => {});
+    if (isAdmin) OrganizationService.invitations().then(setInvitations).catch(() => {});
   }, []);
 
   const save = async () => {
@@ -36,6 +39,37 @@ export default function SettingsPage() {
       toast('Zapisano ustawienia');
     } catch (e) {
       toast(errorMessage(e), 5000);
+    }
+  };
+
+  const sendInvite = async () => {
+    try {
+      const inv = await withBusy('Wysyłanie zaproszenia…', () => OrganizationService.invite(invite.email.trim(), invite.role));
+      setInvitations((list) => [inv, ...list.filter((x) => x.email !== inv.email)]);
+      setInvite({ ...invite, email: '' });
+      toast(inv.email_sent ? `Wysłaliśmy zaproszenie na ${inv.email}` : 'Zaproszenie zapisane, ale nie udało się wysłać maila. Spróbuj ponownie.', 5000);
+    } catch (e) {
+      toast(errorMessage(e), 5000);
+    }
+  };
+
+  const revoke = async (inv: Invitation) => {
+    try {
+      await OrganizationService.revokeInvitation(inv.id);
+      setInvitations((list) => list.filter((x) => x.id !== inv.id));
+    } catch (e) {
+      toast(errorMessage(e));
+    }
+  };
+
+  const removeMember = async (m: Member) => {
+    const ok = await dialog({ title: 'Usunąć osobę z zespołu?', text: `${m.display_name || m.email} straci dostęp do organizacji, a jej konto zostanie usunięte. Dodane przez nią usterki zostają.`, okLabel: 'Usuń', danger: true });
+    if (!ok) return;
+    try {
+      await OrganizationService.removeMember(m.id);
+      setMembers((ms) => ms.filter((x) => x.id !== m.id));
+    } catch (e) {
+      toast(errorMessage(e));
     }
   };
 
@@ -103,10 +137,38 @@ export default function SettingsPage() {
                 onChange={(e) => setRole(m, e.target.value as Role)}>
                 {ROLES.map(([r, l]) => <option key={r} value={r}>{l}</option>)}
               </select>
+              {isAdmin && m.email !== me?.email && <button className="btn small danger" onClick={() => removeMember(m)}>Usuń</button>}
             </li>
           ))}
         </ul>
-        <p className="muted small">Nowe osoby dołączają automatycznie po pierwszym zalogowaniu kontem Microsoft z tej samej firmy (rola: Inspektor).</p>
+        <p className="muted small">Osoby z kontem Microsoft tej samej firmy dołączają same po pierwszym zalogowaniu (rola: Inspektor). Pozostałych zaproś mailem.</p>
+
+        {isAdmin && (
+          <>
+            <h2 className="h2">Zaproszenia <span className="n">{invitations.length}</span></h2>
+            <div className="team-form">
+              <input className="inp" type="email" placeholder="adres e-mail osoby" value={invite.email} autoCapitalize="off" spellCheck={false}
+                onChange={(e) => setInvite({ ...invite, email: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && sendInvite()} />
+              <select className="inp" value={invite.role} onChange={(e) => setInvite({ ...invite, role: e.target.value as Role })}>
+                {ROLES.map(([r, l]) => <option key={r} value={r}>{l}</option>)}
+              </select>
+              <button className="btn primary" onClick={sendInvite} disabled={!invite.email.includes('@')}>Zaproś</button>
+            </div>
+            {invitations.length > 0 && (
+              <ul className="dlist">
+                {invitations.map((i) => (
+                  <li key={i.id} className="ritem">
+                    <div className="txt"><span className="ty">{i.email}</span>
+                      <span className="muted small">{ROLES.find(([r]) => r === i.role)?.[1]} · ważne do {new Date(i.expires_at).toLocaleDateString('pl-PL')}</span></div>
+                    <span className="badge-soft">oczekuje</span>
+                    <button className="btn small" onClick={() => revoke(i)}>Cofnij</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="muted small">Zaproszona osoba dostaje mail z linkiem, ustawia hasło i od razu trafia do tego zespołu. Zaproszenia liczą się do limitu osób w planie.</p>
+          </>
+        )}
       </main>
     </>
   );

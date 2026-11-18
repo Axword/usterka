@@ -90,3 +90,11 @@ def test_wsgi_application_is_importable():
     from config import wsgi
 
     assert callable(wsgi.application)
+
+
+def test_mail_backend_depends_on_smtp_configuration(load_settings, monkeypatch):
+    monkeypatch.delenv('EMAIL_HOST', raising=False)
+    assert load_settings()['EMAIL_BACKEND'].endswith('console.EmailBackend')
+    s = load_settings(EMAIL_HOST='ssl0.ovh.net', EMAIL_PORT='465', DEFAULT_FROM_EMAIL='Usterki <noreply@axword.pl>')
+    assert s['EMAIL_BACKEND'].endswith('smtp.EmailBackend') and s['EMAIL_PORT'] == 465 and s['EMAIL_USE_SSL'] is True
+    assert s['DEFAULT_FROM_EMAIL'] == 'Usterki <noreply@axword.pl>' and s['PASSWORD_RESET_TIMEOUT'] == 7200

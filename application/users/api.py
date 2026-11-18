@@ -6,7 +6,15 @@ from pydantic import EmailStr
 from core.access import membership
 from core.auth import make_dev_token, make_password_token
 
-from .services import dev_login, login_with_password, register_with_password
+from . import emails
+from .services import (
+    confirm_password_reset,
+    dev_login,
+    login_with_password,
+    register_with_password,
+    request_password_reset,
+    resend_verification,
+)
 
 router = Router()
 
@@ -41,6 +49,24 @@ class TokenOut(Schema):
     token: str
 
 
+class OkOut(Schema):
+    ok: bool = True
+
+
+class EmailIn(Schema):
+    email: EmailStr
+
+
+class ResetConfirmIn(Schema):
+    uid: str
+    token: str
+    password: str
+
+
+class VerifyIn(Schema):
+    token: str
+
+
 class MeOut(Schema):
     id: int
     email: str
@@ -49,6 +75,7 @@ class MeOut(Schema):
     organization_id: str
     organization_name: str
     role: str
+    email_verified: bool
 
 
 @router.get('/config', auth=None, response=AuthConfigOut)
@@ -100,4 +127,64 @@ def me(request):
         'organization_id': str(m.organization_id),
         'organization_name': m.organization.name,
         'role': m.role,
+        'email_verified': u.email_verified,
     }
+
+
+@router.post('/password-reset', auth=None, response=OkOut)
+def password_reset_view(request, data: EmailIn):
+    if not settings.AUTH_PASSWORD_LOGIN:
+        raise HttpError(404, 'Niedostępne.')
+    request_password_reset(request, data.email)
+    return {'ok': True}
+
+
+@router.post('/password-reset/confirm', auth=None, response=TokenOut)
+def password_reset_confirm_view(request, data: ResetConfirmIn):
+    if not settings.AUTH_PASSWORD_LOGIN:
+        raise HttpError(404, 'Niedostępne.')
+    user = confirm_password_reset(request, data.uid, data.token, data.password)
+    return {'token': make_password_token(user.pk)}
+
+
+@router.post('/verify-email', auth=None, response=OkOut)
+def verify_email_view(request, data: VerifyIn):
+    emails.verify_email(data.token)
+    return {'ok': True}
+
+
+@router.post('/resend-verification', response=OkOut)
+def resend_verification_view(request):
+    resend_verification(request, request.auth)
+    return {'ok': True}
+
+
+class InvitationInfoOut(Schema):
+    organization_name: str
+    email: str
+    role: str
+
+
+class InvitationAcceptIn(Schema):
+    password: str
+    name: str = ''
+
+
+@router.get('/invitations/{token}', auth=None, response=InvitationInfoOut)
+def invitation_info(request, token: str):
+    from organizations.invitations import get_pending_invitation
+
+    inv = get_pending_invitation(token)
+    return {'organization_name': inv.organization.name, 'email': inv.email, 'role': inv.role}
+
+
+@router.post('/invitations/{token}/accept', auth=None, response={201: TokenOut})
+def invitation_accept(request, token: str, data: InvitationAcceptIn):
+    from core.throttle import check_signup_allowed
+    from organizations.invitations import accept_invitation
+
+    if not settings.AUTH_PASSWORD_LOGIN:
+        raise HttpError(404, 'Niedostępne.')
+    check_signup_allowed(request)
+    user = accept_invitation(token, data.password, data.name)
+    return Status(201, {'token': make_password_token(user.pk)})

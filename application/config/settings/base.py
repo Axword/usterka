@@ -135,6 +135,20 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_PASSWORD_LOGIN = env_bool('AUTH_PASSWORD_LOGIN', True)
 PASSWORD_TOKEN_MAX_AGE = 60 * 60 * 24 * 14
 
+# ---------- Poczta (reset hasła, potwierdzenie e-maila, zaproszenia) ----------
+# Bez EMAIL_HOST wiadomości trafiają do logów (konsola) - wygodne lokalnie, na produkcji ustaw SMTP.
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '465'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', True)
+EMAIL_TIMEOUT = 10
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' if EMAIL_HOST else 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL') or 'Usterki na planie <noreply@localhost>'
+PASSWORD_RESET_TIMEOUT = 2 * 60 * 60  # ważność linku do resetu hasła (sekundy)
+EMAIL_VERIFY_MAX_AGE = 3 * 24 * 60 * 60
+INVITATION_DAYS = 7
+
 # ---------- Subskrypcje (Stripe) ----------
 # Bez STRIPE_SECRET_KEY i przy DEBUG=true płatność jest symulowana (tryb demo). Patrz docs/06-subskrypcje-stripe.md
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')

@@ -17,6 +17,7 @@ export interface Me {
   organization_id: string;
   organization_name: string;
   role: Role;
+  email_verified: boolean;
 }
 
 export interface Organization {
@@ -173,4 +174,19 @@ export interface Subscription {
   has_customer: boolean;
   projects_used: number;
   projects_limit: number | null;
+}
+
+export interface Invitation {
+  id: string;
+  email: string;
+  role: Role;
+  created_at: string;
+  expires_at: string;
+  email_sent: boolean;
+}
+
+export interface InvitationInfo {
+  organization_name: string;
+  email: string;
+  role: Role;
 }

@@ -14,6 +14,9 @@ interface AuthState {
   init: () => Promise<void>;
   devLogin: (email: string, name?: string) => Promise<void>;
   passwordLogin: (email: string, password: string) => Promise<void>;
+  resetPassword: (uid: string, token: string, password: string) => Promise<void>;
+  acceptInvitation: (token: string, password: string, name: string) => Promise<void>;
+  refreshMe: () => Promise<void>;
   register: (d: { email: string; password: string; name: string; company: string }) => Promise<void>;
   microsoftLogin: () => Promise<void>;
   logout: () => Promise<void>;
@@ -54,6 +57,22 @@ export const useAuth = create<AuthState>((set, get) => ({
     const { token } = await AuthService.login(email, password);
     State.setDevToken(token);
     set({ me: await AuthService.me(), status: 'ready' });
+  },
+
+  async resetPassword(uid, token, password) {
+    const { token: session } = await AuthService.resetPassword(uid, token, password);
+    State.setDevToken(session);
+    set({ me: await AuthService.me(), status: 'ready' });
+  },
+
+  async acceptInvitation(token, password, name) {
+    const { token: session } = await AuthService.acceptInvitation(token, password, name);
+    State.setDevToken(session);
+    set({ me: await AuthService.me(), status: 'ready' });
+  },
+
+  async refreshMe() {
+    set({ me: await AuthService.me() });
   },
 
   async register(d) {

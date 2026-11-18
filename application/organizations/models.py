@@ -6,6 +6,9 @@ from core.models import TimeStampedModel, UUIDModel
 DEFAULT_DEFECT_TYPES = ['Budowlana', 'Sanitarna', 'Elektryczna', 'Instalacje budynkowe', 'Meble/wyposażenie', 'Inna']
 
 
+ROLE_CHOICES = [('admin', 'Administrator'), ('inspector', 'Inspektor'), ('viewer', 'Podgląd')]
+
+
 def default_defect_types():
     return list(DEFAULT_DEFECT_TYPES)
 
@@ -26,8 +29,32 @@ class Organization(UUIDModel, TimeStampedModel):
         return self.name
 
 
+class Invitation(UUIDModel, TimeStampedModel):
+    """Zaproszenie do organizacji. W bazie jest tylko skrót tokenu: wyciek bazy nie ujawnia działających linków."""
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='invitations')
+    email = models.EmailField('e-mail zaproszonej osoby')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='inspector')
+    token_hash = models.CharField(max_length=64, unique=True)
+    invited_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
+    expires_at = models.DateTimeField()
+    accepted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Zaproszenie {self.email} do {self.organization}'
+
+    @property
+    def is_pending(self) -> bool:
+        from django.utils import timezone
+
+        return self.accepted_at is None and self.expires_at > timezone.now()
+
+
 class Membership(TimeStampedModel):
-    ROLES = [('admin', 'Administrator'), ('inspector', 'Inspektor'), ('viewer', 'Podgląd')]
+    ROLES = ROLE_CHOICES
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='memberships')
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='memberships')

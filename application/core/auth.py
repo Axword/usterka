@@ -1,3 +1,5 @@
+import hashlib
+
 from django.conf import settings
 from django.core import signing
 from ninja.errors import HttpError
@@ -15,8 +17,16 @@ def make_dev_token(user_id: int) -> str:
     return DEV_PREFIX + signing.dumps({'uid': user_id}, salt=DEV_SALT)
 
 
+def password_fingerprint(user) -> str:
+    """Odcisk hasła: po zmianie hasła (np. resecie) stare tokeny sesji przestają działać."""
+    return hashlib.sha256(user.password.encode()).hexdigest()[:16]
+
+
 def make_password_token(user_id: int) -> str:
-    return PWD_PREFIX + signing.dumps({'uid': user_id}, salt=PWD_SALT)
+    from users.models import User
+
+    user = User.objects.get(pk=user_id)
+    return PWD_PREFIX + signing.dumps({'uid': user_id, 'pv': password_fingerprint(user)}, salt=PWD_SALT)
 
 
 class ApiAuth(HttpBearer):
@@ -43,6 +53,8 @@ class ApiAuth(HttpBearer):
             except signing.BadSignature as exc:
                 raise HttpError(401, 'Sesja wygasła. Zaloguj się ponownie.') from exc
             user = User.objects.filter(pk=data['uid'], is_active=True).first()
+            if user and data.get('pv') != password_fingerprint(user):
+                user = None  # hasło zmieniono po wydaniu tokenu
             request.ms_token = None
         else:
             try:

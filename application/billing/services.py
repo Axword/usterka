@@ -28,9 +28,10 @@ def check_project_limit(org):
         raise HttpError(402, f'Plan „{PLANS[plan]["name"]}” pozwala na {limit} inwestycji. Przejdź na wyższy plan w Subskrypcji.')
 
 
-def check_member_limit(org):
+def check_member_limit(org, pending_invitations=0):
+    """Osoby w organizacji plus oczekujące zaproszenia nie mogą przekroczyć limitu planu."""
     limit = PLANS[effective_plan(org)]['max_members']
-    if limit is not None and Membership.objects.filter(organization=org).count() >= limit:
+    if limit is not None and Membership.objects.filter(organization=org).count() + pending_invitations >= limit:
         raise HttpError(402, 'Osiągnięto limit osób w tym planie.')
 
 

@@ -11,6 +11,8 @@ MAX_FAILS = 5  # nieudanych prób na adres e-mail
 MAX_FAILS_IP = 20  # nieudanych prób z jednego adresu IP
 WINDOW = 15 * 60  # sekundy: okno liczenia i czas blokady
 SIGNUP_PER_IP = 10  # rejestracji z jednego IP w oknie godzinnym
+MAIL_PER_EMAIL = 5  # wiadomości na jeden adres w ciągu godziny
+MAIL_PER_IP = 20  # wiadomości na żądania z jednego IP w ciągu godziny
 
 
 def client_ip(request) -> str:
@@ -42,13 +44,23 @@ def reset_login_failures(request, email: str):
     cache.delete(_keys(request, email)[0])
 
 
-def check_signup_allowed(request):
-    key = f'signup:ip:{client_ip(request)}'
-    cache.add(key, 0, 3600)
+def _hit(key: str, window: int) -> int:
+    """Zlicza zdarzenie w oknie czasowym i zwraca bieżącą liczbę."""
+    cache.add(key, 0, window)
     try:
-        n = cache.incr(key)
-    except ValueError:
-        cache.set(key, 1, 3600)
-        n = 1
-    if n > SIGNUP_PER_IP:
+        return cache.incr(key)
+    except ValueError:  # licznik wygasł między add() a incr()
+        cache.set(key, 1, window)
+        return 1
+
+
+def check_signup_allowed(request):
+    if _hit(f'signup:ip:{client_ip(request)}', 3600) > SIGNUP_PER_IP:
         raise HttpError(429, 'Zbyt wiele rejestracji z tego adresu. Spróbuj później.')
+
+
+def check_mail_allowed(request, kind: str, email: str):
+    """Limit wiadomości wysyłanych na żądanie anonima (reset hasła itp.): chroni przed zalewaniem skrzynek."""
+    if (_hit(f'mail:{kind}:email:{email.lower()}', 3600) > MAIL_PER_EMAIL
+            or _hit(f'mail:{kind}:ip:{client_ip(request)}', 3600) > MAIL_PER_IP):
+        raise HttpError(429, 'Zbyt wiele próśb. Spróbuj ponownie za godzinę.')

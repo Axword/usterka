@@ -75,6 +75,7 @@ export default function LoginPage() {
               autoComplete={mode === 'register' ? 'new-password' : 'current-password'} placeholder={mode === 'register' ? 'Minimum 8 znaków' : ''} /></label>
           {err && <p className="formerr">{err}</p>}
           <button className="btn primary block" onClick={submit} disabled={busy}>{mode === 'register' ? 'Utwórz konto' : 'Zaloguj się'}</button>
+          {mode === 'login' && <p className="small" style={{ marginTop: 12 }}><Link className="plain" to="/forgot">Nie pamiętasz hasła?</Link></p>}
         </>
       )}
 

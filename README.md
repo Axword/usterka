@@ -42,6 +42,7 @@ cd ../usterka_frontend; npm run build
 | [docs/06-subskrypcje-stripe.md](docs/06-subskrypcje-stripe.md) | Logowanie hasłem, plany, Stripe (test i produkcja) |
 | [docs/07-wdrozenie-ovh.md](docs/07-wdrozenie-ovh.md) | Wdrożenie na VPS w OVH: DNS, Docker, HTTPS, kopie |
 | [docs/08-ci-cd.md](docs/08-ci-cd.md) | CI/CD, zasady testów (100% pokrycia), automatyczne wdrożenie |
+| [docs/09-konta-i-zespol.md](docs/09-konta-i-zespol.md) | Reset hasła, potwierdzanie e-maila, zaproszenia, konfiguracja poczty |
 | [docs/architecture.md](docs/architecture.md) | Moduły, model danych, przepływy, API |
 | [docs/05-konfiguracja-microsoft.md](docs/05-konfiguracja-microsoft.md) | Rejestracja aplikacji w Entra ID, logowanie, SharePoint |
 | [docs/running.md](docs/running.md) | Zmienne środowiskowe, PostgreSQL, wdrożenie |
