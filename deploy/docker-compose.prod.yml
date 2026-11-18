@@ -1,3 +1,4 @@
+name: usterka
 # Produkcja na VPS:  docker compose -f deploy/docker-compose.prod.yml --env-file .env up -d --build
 # Z katalogu głównego repozytorium. Zmienne w .env (wzór: deploy/.env.production.example).
 services:
